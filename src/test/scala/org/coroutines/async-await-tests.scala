@@ -399,4 +399,14 @@ class AsyncAwaitTest extends FunSuite with Matchers {
     })
     assert(Await.result(sign, 5 seconds) == 1.0)
   }
+
+  // Source: https://git.io/vrHmG
+  test("pattern matching partial function") {
+    val c = AsyncAwaitTest.async(coroutine { () =>
+      val f = { case x => x + 1 }: PartialFunction[Int, Int]
+      AsyncAwaitTest.await { Future { f(2) } }
+    })
+    val res = Await.result(c, 2 seconds)
+    assert(res == 3)
+  }
 }
