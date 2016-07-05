@@ -121,29 +121,45 @@ trait AstCanonicalization[C <: Context] {
       (decls, q"$localvarname")
     case q"$selector[..$tpts](...$paramss)" if tpts.length > 0 || paramss.length > 0 =>
       // application
+
+      /** We first need to see which parameters, if any, are by-name. Those that are
+       *  should not be canonicalized.
+       */
+
+      // Maps to the parameter lists, saying whether or not they are by-name.
       val byNameParams: immutable.Seq[immutable.Seq[Boolean]] = {
+        /** Check that `selector` has a non-trivial symbol. If it doesn't, we assume
+         *  that there were no by-name parameters.
+         */
         if (selector.symbol != null && selector.symbol != NoSymbol) {
-          val methodSymbol = selector.symbol.asMethod
-          val noRepeatedParamsMap = methodSymbol.paramLists.map { paramList =>
-            paramList.map { param =>
-              param match {
-                case ts: TermSymbol =>
-                  ts.isByNameParam
-                case _ =>
-                  false
-              }
-            }
+          val paramLists = selector.symbol.asMethod.paramLists
+
+          // This value does not contain repeated parameters.
+          val noRepeatedParamsSeq = paramLists.map { currentParamList =>
+            currentParamList.map { param => param.asTerm.isByNameParam }
           }
-          if (paramss.length > 0 && noRepeatedParamsMap.length > 0) {
-            var repeatedParamsMap: List[List[Boolean]] = noRepeatedParamsMap
-            while (paramss(0).length > repeatedParamsMap(0).length) {
-              val newHead: List[Boolean] = repeatedParamsMap(0) :+ noRepeatedParamsMap(0).last
-              val newTail: List[List[Boolean]] = repeatedParamsMap.tail
-              repeatedParamsMap = newHead :: newTail
+
+          // Check that parameters were both passed in to and requested by the method.
+          if (paramss.length > 0 && noRepeatedParamsSeq.length > 0) {
+            // Initially, we assume that no parameters were repeated.
+            var paramsSeq = noRepeatedParamsSeq
+
+            /** If the number of passed-in parameters is greater than the number of
+             *  parameters needed by the method, then we assume that there are repeated
+             *  parameters.
+             *
+             *  This problem is fixed by appending the last value in
+             *  `noRepeatedParamsSeq` to `paramsSeq`. This is done until the number of
+             *  parameters are equal.
+             */
+            while (paramss(0).length > paramsSeq(0).length) {
+              val newHead = paramsSeq(0) :+ paramsSeq(0).last
+              val newTail = paramsSeq.tail
+              paramsSeq = newHead :: newTail
             }
-            repeatedParamsMap
+            paramsSeq
           } else {
-            noRepeatedParamsMap
+            noRepeatedParamsSeq
           }
         } else {
           immutable.Seq.fill(1, paramss(0).length)(false)
