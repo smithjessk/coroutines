@@ -462,20 +462,28 @@ class AsyncAwaitTest extends FunSuite with Matchers {
     assert(result == 103)
   }
 
-  // Source: https://git.io/vrFj3
+  /** Source: https://git.io/vrFj3
+   *  Modified so that there is no coroutine passed as a by-name parameter. For more
+   *  information, see https://git.io/vKkM5.
+   */
   test("nested await as bare expression") {
     val c = async(coroutine { () =>
-      await(Future(await(Future("")).isEmpty))
+      val emptyString = await(Future(""))
+      await(Future(emptyString.isEmpty))
     })
     val result = Await.result(c, 5 seconds)
     assert(result == true)
   }
 
-  // Source: https://git.io/vrAnM
+  /** Source: https://git.io/vrAnM
+   *  Modified so that there is no coroutine passed as a by-name parameter. For more
+   *  information, see https://git.io/vKkM5.
+   */
   test("nested await in block") {
     val c = async(coroutine { () =>
       ()
-      await(Future(await(Future("")).isEmpty))
+      val emptyString = await(Future(""))
+      await(Future(emptyString.isEmpty))
     })
     val result = Await.result(c, 5 seconds)
     assert(result == true)
@@ -494,15 +502,15 @@ class AsyncAwaitTest extends FunSuite with Matchers {
   }
   */
 
-  // Source: https://git.io/vrAlJ
-  /** NOTE: This test currently fails because the future times out.
-   *  Interestingly, the future doesn't time out if `1` is passed as the first
-   *  argument to `foo`.
+  /** Source: https://git.io/vrAlJ
+   *  Modified so that there is no coroutine passed as a by-name parameter. For more
+   *  information, see https://git.io/vKkM5.
    */
   test("by-name expressions aren't lifted") {
     def foo(ignored: => Any, b: Int) = b
     val c = async(coroutine { () =>
-      await(Future(foo(???, await(Future(1)))))
+      val innerValue = await(Future(1))
+      await(Future(foo(???, innerValue)))
     })
     val result = Await.result(c, 5 seconds)
     assert(result == 1)
