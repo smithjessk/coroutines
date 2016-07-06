@@ -122,15 +122,13 @@ trait AstCanonicalization[C <: Context] {
     case q"$selector[..$tpts](...$paramss)" if tpts.length > 0 || paramss.length > 0 =>
       // application
 
-      /** We first need to see which parameters, if any, are by-name. Those that are
-       *  should not be canonicalized.
-       */
+      // We first need to see which parameters, if any, are by-name. Those that are
+      // should not be canonicalized.
 
       // Maps to the parameter lists, saying whether or not they are by-name.
       val byNameParams: immutable.Seq[immutable.Seq[Boolean]] = {
-        /** Check that `selector` has a non-trivial symbol. If it doesn't, we assume
-         *  that there were no by-name parameters.
-         */
+        // Check that `selector` has a non-trivial symbol. If it doesn't, we assume
+        // that there were no by-name parameters.
         if (selector.symbol != null && selector.symbol != NoSymbol) {
           val paramLists = selector.symbol.asMethod.paramLists
 
@@ -173,11 +171,16 @@ trait AstCanonicalization[C <: Context] {
           (Nil, q"$method")
       }
       for (tpt <- tpts) disallowCoroutinesIn(tpt)
-      type TupleType = (List[c.universe.Tree], c.universe.Tree)
-      val paramsByNameUnmodified: List[List[TupleType]] = {
-        val modifiedParamLists = mutable.Seq.fill[List[TupleType]](paramss.length)(null)
+
+      // Canonicalize parameters that are not by-name.
+      val paramsByNameUnmodified = {
+        val modifiedParamLists = mutable.Seq.fill[
+          List[(List[c.universe.Tree], c.universe.Tree)]](paramss.length)(null)
+
+        // Canonicalize each parameter list.
         for (i <- 0 until paramss.length) {
-          val modifiedParams = mutable.Seq.fill[TupleType](paramss(i).length)(null)
+          val modifiedParams = mutable.Seq.fill[
+            (List[c.universe.Tree], c.universe.Tree)](paramss(i).length)(null)
           for (j <- 0 until modifiedParams.length) {
             if (byNameParams(i)(j)) {
               modifiedParams(j) = (List(q""), paramss(i)(j))
@@ -190,9 +193,8 @@ trait AstCanonicalization[C <: Context] {
         modifiedParamLists.toList
       }
       val pdeclss =
-        paramsByNameUnmodified.map((_.map(tuple => tuple._1))).flatten.flatten.filter{ decl =>
-          decl != q""
-        }
+        paramsByNameUnmodified.map((_.map(tuple => tuple._1)))
+          .flatten.flatten.filter{ decl => decl != q"" }
       val pidents = paramsByNameUnmodified.map((_.map(tuple => tuple._2)))
       val localvarname = TermName(c.freshName("x"))
       val localvartree = q"val $localvarname = $newselector[..$tpts](...$pidents)"
