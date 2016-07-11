@@ -38,4 +38,17 @@ class ByNameTest extends FunSuite with Matchers {
     }
     """ shouldNot typeCheck
   }
+
+  test("repeated parameters") {
+    def foo(a: => Int, otherInts: Int*): Int = {
+      otherInts.foldLeft(a)((sum: Int, current: Int) => sum + current)
+    }
+
+    val c = coroutine { (starter: Int) =>
+      foo(starter, 1, 2, 3)
+    }
+    val instance = call(c(4))
+    assert(!instance.resume)
+    assert(instance.result == 10)
+  }
 }
