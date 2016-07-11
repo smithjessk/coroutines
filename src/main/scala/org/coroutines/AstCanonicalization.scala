@@ -160,7 +160,6 @@ trait AstCanonicalization[C <: Context] {
             noRepeatedParamsSeq
           }
         } else {
-          // immutable.Seq.fill(1, paramss(0).length)(false)
           for (params <- paramss) yield
             for (p <- params) yield false
         }
