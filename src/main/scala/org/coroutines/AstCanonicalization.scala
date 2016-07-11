@@ -8,6 +8,7 @@ import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
 
 
+
 /** Transforms the coroutine body into three address form with restricted control flow
  *  that contains only try-catch statements, while loops, if-statements, value and
  *  variable declarations, pattern matches, nested blocks and function calls.
@@ -122,11 +123,10 @@ trait AstCanonicalization[C <: Context] {
     case q"$selector[..$tpts](...$paramss)" if tpts.length > 0 || paramss.length > 0 =>
       // application
 
-      // We first need to see which parameters, if any, are by-name. Those that are
-      // should not be canonicalized.
+      // Detect by-name parameters and prevent their canonicalization.
 
       // Maps to the parameter lists, saying whether or not they are by-name.
-      val byNameParams: immutable.Seq[immutable.Seq[Boolean]] = {
+      val byNameParams: Seq[Seq[Boolean]] = {
         // Check that `selector` has a non-trivial symbol. If it doesn't, we assume
         // that there were no by-name parameters.
         if (selector.symbol != null && selector.symbol != NoSymbol) {
@@ -160,7 +160,9 @@ trait AstCanonicalization[C <: Context] {
             noRepeatedParamsSeq
           }
         } else {
-          immutable.Seq.fill(1, paramss(0).length)(false)
+          // immutable.Seq.fill(1, paramss(0).length)(false)
+          for (params <- paramss) yield
+            for (p <- params) yield false
         }
       }
       val (rdecls, newselector) = selector match {
