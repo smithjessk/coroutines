@@ -62,4 +62,14 @@ class ByNameTest extends FunSuite with Matchers {
     assert(!instance.resume)
     assert(instance.result == 1)
   }
+
+  test("mixed argument lists can end in non by-name parameters") {
+    def foo(firstIgnored: => Any, b: Int, secondIgnored: => Any, d: Int) = { b + d }
+    val c = coroutine { () =>
+      foo(???, 1, { throw new Exception }, 2)
+    }
+    val instance = call(c())
+    assert(!instance.resume)
+    assert(instance.result == 3)
+  }
 }
