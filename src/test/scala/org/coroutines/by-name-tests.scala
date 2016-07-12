@@ -51,4 +51,15 @@ class ByNameTest extends FunSuite with Matchers {
     assert(!instance.resume)
     assert(instance.result == 10)
   }
+
+  // Inspired by https://git.io/vrAlJ
+  test("by-name arguments aren't lifted when they surround a non by-name one") {
+    def foo(firstIgnored: => Any, b: Int, secondIgnored: => Any) = b
+    val c = coroutine { () =>
+      foo(???, 1, { throw new Exception })
+    }
+    val instance = call(c())
+    assert(!instance.resume)
+    assert(instance.result == 1)
+  }
 }
