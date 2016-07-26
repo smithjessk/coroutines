@@ -125,6 +125,19 @@ trait AstCanonicalization[C <: Context] {
 
       // Detect by-name parameters and prevent their canonicalization.
 
+      // Does not account for when `selector.tpe == null`.
+      val paramTypeSignatures = selector.tpe match {
+        case pmt: PolyType => pmt.paramLists(0) map { name =>
+          val sig = name.typeSignature
+          sig.substituteTypes(pmt.typeParams, tpts map (_.tpe))
+        }
+        case MethodType(params, _) => params map { _.typeSignature }
+      }
+      val byNameClass = definitions.ByNameParamClass
+      val byNameParamTypes = paramTypeSignatures.map { sig =>
+        sig match { case TypeRef(_, byNameClass, args) => args }
+      }
+
       // Maps to the parameter lists, saying whether or not they are by-name.
       val byNameParams: Seq[Seq[Boolean]] = {
         // Check that `selector` has a non-trivial symbol. If it doesn't, we assume
