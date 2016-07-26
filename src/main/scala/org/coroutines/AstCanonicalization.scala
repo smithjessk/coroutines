@@ -184,6 +184,7 @@ trait AstCanonicalization[C <: Context] {
             (List[c.universe.Tree], c.universe.Tree)](paramss(i).length)(null)
           for (j <- 0 until modifiedParams.length) {
             if (byNameParams(i)(j)) {
+              new NestedContextValidator().traverse(paramss(i)(j))
               modifiedParams(j) = (List(q""), paramss(i)(j))
             } else {
               modifiedParams(j) = canonicalize(paramss(i)(j))
