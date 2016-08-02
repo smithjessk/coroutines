@@ -124,59 +124,46 @@ trait AstCanonicalization[C <: Context] {
       // application
 
       // Detect by-name parameters and prevent their canonicalization.
+      if (selector.symbol != null && selector.symbol != NoSymbol) {
+        val methodParamLists = selector.symbol.asMethod.paramLists
 
-      // Does not account for when `selector.tpe == null`.
-      val paramTypeSignatures = selector.tpe match {
-        case pmt: PolyType => pmt.paramLists(0) map { name =>
-          val sig = name.typeSignature
-          sig.substituteTypes(pmt.typeParams, tpts map (_.tpe))
+        // Assert that the length of the arg lists at the callsite is equal to the
+        // length of the parameter list at the method definition.
+        val validParamLists =
+          methodParamLists.corresponds(paramss)((definitionList, callsiteList) => {
+            definitionList.length == callsiteList.length
+          })
+
+        if (!validParamLists) {
+          c.abort(tree.pos, s"The parameter lists passed into $selector do not " +
+            s"match in length to the ones expected by $selector.")
         }
-        case MethodType(params, _) => params map { _.typeSignature }
-      }
-      val byNameClass = definitions.ByNameParamClass
-      val byNameParamTypes = paramTypeSignatures.map { sig =>
-        sig match { case TypeRef(_, byNameClass, args) => args }
       }
 
-      // Maps to the parameter lists, saying whether or not they are by-name.
       val byNameParams: Seq[Seq[Boolean]] = {
-        // Check that `selector` has a non-trivial symbol. If it doesn't, we assume
-        // that there were no by-name parameters.
-        if (selector.symbol != null && selector.symbol != NoSymbol) {
-          val paramLists = selector.symbol.asMethod.paramLists
-
-          // This value does not contain repeated parameters.
-          val noRepeatedParamsSeq = paramLists.map { currentParamList =>
-            currentParamList.map { param => param.asTerm.isByNameParam }
-          }
-
-          // Check that parameters were both passed in to and requested by the method.
-          if (paramss.length > 0 && noRepeatedParamsSeq.length > 0) {
-            // Initially, we assume that no parameters were repeated.
-            var paramsSeq = noRepeatedParamsSeq
-
-            /** If the number of passed-in parameters is greater than the number of
-             *  parameters needed by the method, then we assume that there are repeated
-             *  parameters.
-             *
-             *  This problem is fixed by appending the last value in
-             *  `noRepeatedParamsSeq` to `paramsSeq`. This is done until the number of
-             *  parameters are equal.
-             */
-            while (paramss(0).length > paramsSeq(0).length) {
-              val newHead = paramsSeq(0) :+ paramsSeq(0).last
-              val newTail = paramsSeq.tail
-              paramsSeq = newHead :: newTail
-            }
-            paramsSeq
-          } else {
-            noRepeatedParamsSeq
-          }
+        val tpe = typer.typeOf(selector)
+        if (tpe == null) {
+          Seq.empty[Seq[Boolean]]
         } else {
-          for (params <- paramss) yield
-            for (p <- params) yield false
+          val paramTypeSignatures: List[List[Type]] = tpe match {
+            case pmt: PolyType => pmt.paramLists.map { pList =>
+              pList.map { name =>
+                val sig = name.typeSignature
+                sig.substituteTypes(pmt.typeParams, tpts.map { _.tpe })
+              }
+            }
+            case MethodType(params, _) => List(params.map { _.typeSignature })
+          }
+          val ByNameDefinition = definitions.ByNameParamClass
+          paramTypeSignatures.map { list => list.map { sig =>
+            sig match {
+              case TypeRef(_, ByNameDefinition, args) => true
+              case _ => false
+            }
+          } toSeq } toSeq
         }
       }
+
       val (rdecls, newselector) = selector match {
         case q"$r.$method" =>
           val (rdecls, rident) = canonicalize(r)
