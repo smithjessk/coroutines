@@ -114,4 +114,42 @@ class EnumeratorsBoxingBench extends JBench.Forked[Long] {
     val foo = Enumerator(rubeDifferentReturnType)
     val bar = Enumerator(rubeSameReturnType)
   }
+
+  @gen("sizes")
+  @benchmark("coroutines.extra.boxing.foreach")
+  @curve("coroutine")
+  @ctx("noBoxingContext")
+  def foreachTest(size: Int) {
+    val id = coroutine { (n: Int) =>
+      var i = 0
+      while (i < n) {
+        yieldval(i)
+        i += 1
+      }
+    }
+    var i = 0
+    val enumerator = Enumerator(call(id(size)))
+    enumerator.foreach { element =>
+      i += 1
+    }
+  }
+
+  @gen("sizes")
+  @benchmark("coroutines.extra.boxing.map")
+  @curve("coroutine")
+  @ctx("noBoxingContext")
+  def mapTest(size: Int) {
+    val id = coroutine { (n: Int) =>
+      var i = 0
+      while (i < n) {
+        yieldval(i)
+        i += 1
+      }
+    }
+    var i = 0
+    val enumerator = Enumerator(call(id(size)))
+    enumerator.map { element: Int =>
+      i += 1
+    }
+  }
 }

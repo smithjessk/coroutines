@@ -36,6 +36,41 @@ class Enumerator[@specialized Y](instance: Coroutine.Instance[Y, _]) {
     _hasNext = instance.pull
     result
   }
+
+  // Consumes the coroutine
+  def foreach[Z](f: Function1[Y, Z]) {
+    while (hasNext()) {
+      f(next())
+    }
+  }
+
+  // Consumes the coroutine
+  def map[Z](f: Function1[Y, Z]): Enumerator[Z] = {
+    val toYield = mutable.Seq.empty[Z]
+    foreach { value => toYield :+ f(value) }
+    Enumerator(coroutine { () =>
+      var i = 0
+      while (i < toYield.size) {
+        yieldval(toYield(i))
+      }
+    })
+  }
+
+  // Consumes the coroutine
+  def toSeq(): immutable.List[Y] = {
+    val seq = mutable.Seq.empty[Y]
+    while (hasNext()) {
+      seq :+ next()
+    }
+    seq.toList
+  }
+
+  // Consumes the coroutine
+  def mapToSeq(f: Function1[Y, Y]): immutable.List[Y] = {
+    val toYield = mutable.Seq.empty[Y]
+    foreach { value => toYield :+ f(value) }
+    toYield.toList
+  }
 }
 
 object Enumerator {
