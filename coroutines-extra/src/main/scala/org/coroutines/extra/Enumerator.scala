@@ -4,6 +4,7 @@ package org.coroutines.extra
 
 import org.coroutines._
 import scala.collection._
+import scala.util.{ Success, Failure }
 
 
 
@@ -32,7 +33,12 @@ class Enumerator[@specialized Y](instance: Coroutine.Instance[Y, _]) {
    *  @return The result of `instance.value` after the previous call to `instance.pull`
    */
   def next(): Y = {
-    val result = instance.value
+    val result: Y = instance.tryValue match {
+      case Success(value) => value
+      case Failure(error) =>
+        _hasNext = false
+        throw error
+    }
     _hasNext = instance.pull
     result
   }
