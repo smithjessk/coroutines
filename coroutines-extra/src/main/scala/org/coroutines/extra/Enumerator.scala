@@ -71,6 +71,13 @@ class Enumerator[@specialized Y](instance: Coroutine.Instance[Y, _]) {
     foreach { value => toYield :+ f(value) }
     toYield.toList
   }
+
+  // Consumes the coroutine
+  def size(): Int = {
+    var size = 0
+    foreach { _ => size = size + 1 }
+    size
+  }
 }
 
 object Enumerator {

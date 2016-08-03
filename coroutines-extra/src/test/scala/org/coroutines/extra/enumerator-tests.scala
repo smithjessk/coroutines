@@ -74,4 +74,10 @@ class EnumeratorsTest extends FunSuite with Matchers {
     val result = Enumerator(rube).mapToSeq { _ + 1 }
     assert(result == Seq(2, 3, 4))
   }
+
+  test("size should produce a correct result") {
+    val enumerator = Enumerator(rube)
+    assert(enumerator.size == 3)
+    assert(!enumerator.hasNext)
+  }
 }
