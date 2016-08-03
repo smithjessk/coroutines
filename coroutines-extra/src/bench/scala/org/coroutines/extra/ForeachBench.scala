@@ -29,8 +29,8 @@ class ForeachBench extends JBench.OfflineReport {
       var i = 0
       while (i < n) {
         yieldval(i)
+        i += 1
       }
-      i += 1
     }
     val enumerator = Enumerator(call(id(size)))
     var sum = 0
