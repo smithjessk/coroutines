@@ -262,6 +262,10 @@ object CoroutinesBuild extends MechaRepoBuild {
     "coroutines-extra",
     file("coroutines-extra"),
     settings = coroutinesExtraSettings
+  ) configs(
+    Benchmarks
+  ) settings(
+    inConfig(Benchmarks)(Defaults.testSettings): _*
   ) dependsOn(
     coroutines % "compile->compile;test->test"
   ) dependsOnSuperRepo
