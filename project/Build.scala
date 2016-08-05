@@ -167,6 +167,7 @@ object CoroutinesBuild extends MechaRepoBuild {
       scalaVersion <<= coroutinesScalaVersion,
       crossScalaVersions <<= coroutinesCrossScalaVersions,
       libraryDependencies <++= (scalaVersion)(sv => extraDependencies(sv)),
+      testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework"),
       scalacOptions ++= Seq(
         "-deprecation",
         "-unchecked",
@@ -229,7 +230,8 @@ object CoroutinesBuild extends MechaRepoBuild {
   def extraDependencies(scalaVersion: String) =
     CrossVersion.partialVersion(scalaVersion) match {
       case Some((2, major)) if major >= 11 => Seq(
-        "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test"
+        "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test",
+        "org.scala-lang.modules" % "scala-async_2.11" % "0.9.5" % "bench"
       )
       case _ => Nil
     }
@@ -261,6 +263,10 @@ object CoroutinesBuild extends MechaRepoBuild {
     "coroutines-extra",
     file("coroutines-extra"),
     settings = coroutinesExtraSettings
+  ) configs(
+    Benchmarks
+  ) settings(
+    inConfig(Benchmarks)(Defaults.testSettings): _*
   ) dependsOn(
     coroutines % "compile->compile;test->test"
   ) dependsOnSuperRepo
