@@ -38,7 +38,7 @@ class Enumerator[@specialized Y](instance: Coroutine.Instance[Y, _]) {
   }
 
   // Consumes the coroutine
-  def foreach[Z](f: Function1[Y, Z]) {
+  def foreach(f: Function1[Y, Unit]) {
     while (hasNext()) {
       f(next())
     }
