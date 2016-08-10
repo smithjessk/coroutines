@@ -38,6 +38,10 @@ class EnumeratorsBoxingBench extends JBench.Forked[Long] {
     reports.validation.predicate -> { (n: Any) => n == size }
   )
 
+  val doubleSizeBoxingContext = Context(
+    reports.validation.predicate -> { (n: Any) => n == 2 * size }
+  )
+
   val noBoxingContext = Context(
     reports.validation.predicate -> { (n: Any) => n == 0 }
   )
@@ -136,14 +140,14 @@ class EnumeratorsBoxingBench extends JBench.Forked[Long] {
     var i = 0
     val enumerator = Enumerator(call(id(size)))
     enumerator.foreach { element =>
-      i += 1
+      i += element
     }
   }
 
   @gen("sizes")
   @benchmark("coroutines.extra.boxing.map")
   @curve("coroutine")
-  @ctx("noBoxingContext")
+  @ctx("doubleSizeBoxingContext")
   def mapTest(size: Int) {
     val id = coroutine { (n: Int) =>
       var i = 0
@@ -154,8 +158,9 @@ class EnumeratorsBoxingBench extends JBench.Forked[Long] {
     }
     var i = 0
     val enumerator = Enumerator(call(id(size)))
-    enumerator.map { element: Int =>
-      i += 1
+    val createdEnumerator = enumerator.map { element: Int =>
+      i += element
+      i
     }
   }
 }
