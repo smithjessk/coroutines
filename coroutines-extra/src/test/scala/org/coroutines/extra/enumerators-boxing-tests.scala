@@ -30,7 +30,13 @@ class EnumeratorsBoxingBench extends JBench.Forked[Long] {
     ValidationReporter()
   )
 
-  val sizes = Gen.single("size")(1000)
+  val size = 1000
+
+  val sizes = Gen.single("size")(size)
+
+  val sizeBoxingContext = Context(
+    reports.validation.predicate -> { (n: Any) => n == size }
+  )
 
   val noBoxingContext = Context(
     reports.validation.predicate -> { (n: Any) => n == 0 }
@@ -118,7 +124,7 @@ class EnumeratorsBoxingBench extends JBench.Forked[Long] {
   @gen("sizes")
   @benchmark("coroutines.extra.boxing.foreach")
   @curve("coroutine")
-  @ctx("noBoxingContext")
+  @ctx("sizeBoxingContext")
   def foreachTest(size: Int) {
     val id = coroutine { (n: Int) =>
       var i = 0
