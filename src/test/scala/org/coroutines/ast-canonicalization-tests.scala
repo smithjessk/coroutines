@@ -284,4 +284,24 @@ class ASTCanonicalizationTest extends FunSuite with Matchers {
     assert(c1.result == 1)
     assert(c1.isCompleted)
   }
+
+  test("should be able to reference aliased imports") {
+    val rube = coroutine { () =>
+      import scala.collection.mutable.{ Seq => mSeq }
+      val collection = mSeq(1, 2, 3)
+      collection.update(2, 4)
+      yieldval(collection(0))
+      yieldval(collection(1))
+      yieldval(collection(2))
+    }
+    val c = call(rube())
+    assert(c.resume)
+    assert(c.value == 1)
+    assert(c.resume)
+    assert(c.value == 2)
+    assert(c.resume)
+    assert(c.value == 4)
+    assert(!c.resume)
+    assert(c.result == ())
+  }
 }
