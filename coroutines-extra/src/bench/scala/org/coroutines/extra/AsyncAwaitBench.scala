@@ -26,8 +26,6 @@ class AsyncAwaitBench extends JBench.OfflineReport {
 
   val delayedSizes = Gen.range("size")(5, 25, 5)
 
-  val innerSizes = Gen.range("size")(5, 25, 1000)
-
   private def request(i: Int): Future[Unit] = Future { () }
 
   private def delayedRequest(i: Int): Future[Unit] = Future { Thread.sleep(1) }
@@ -60,7 +58,7 @@ class AsyncAwaitBench extends JBench.OfflineReport {
     Await.result(done, 10.seconds)
   }
 
-  @gen("innerSizes")
+  @gen("delayedSizes")
   @benchmark("coroutines.extra.async.inner-async")
   @curve("async")
   def innerAsyncAwait(sz: Int) = {
@@ -107,7 +105,7 @@ class AsyncAwaitBench extends JBench.OfflineReport {
     Await.result(done, 10.seconds)
   }
 
-  @gen("innerSizes")
+  @gen("delayedSizes")
   @benchmark("coroutines.extra.async.inner-async")
   @curve("coroutine")
   def innerCoroutineAsyncAwait(sz: Int) = {
