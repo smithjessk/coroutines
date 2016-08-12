@@ -13,8 +13,8 @@ import scala.reflect.macros.whitebox.Context
  *  that contains only try-catch statements, while loops, if-statements, value and
  *  variable declarations, pattern matches, nested blocks and function calls.
  *
- *  Newly synthesized variables get mangled fresh names, and existing variable names are
- *  preserved.
+ *  Newly synthesized variables get mangled fresh names, and existing variable names
+ *  are preserved.
  *
  *  Coroutine operations usages are checked for correctness, and nested contexts, such
  *  as function and class declarations, are checked, but not transformed.
@@ -284,8 +284,8 @@ trait AstCanonicalization[C <: Context] {
       // TODO: This is a temporary fix. It is very dangerous, since it makes the
       // transformation take O(2^n) time in the depth of the tree.
       //
-      // The correct solution is to duplicate the trees so that duplicate value decls in
-      // the two trees get fresh names.
+      // The correct solution is to duplicate the trees so that duplicate value decls
+      // in the two trees get fresh names.
       val (xdecls1, xident1) = canonicalize(cond)
       val localvarname = TermName(c.freshName("x"))
       val decls = if (xdecls0 != Nil) {
