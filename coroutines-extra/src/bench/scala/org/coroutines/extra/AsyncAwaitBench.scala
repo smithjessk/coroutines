@@ -5,8 +5,7 @@ package org.coroutines.extra
 import org.coroutines._
 import org.scalameter.api._
 import org.scalameter.japi.JBench
-import scala.async.Async.async
-import scala.async.Async.await
+import scala.async.Async
 import scala.collection._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -35,10 +34,10 @@ class AsyncAwaitBench extends JBench.OfflineReport {
   @benchmark("coroutines.extra.async.request-reply")
   @curve("async")
   def asyncAwait(sz: Int) = {
-    val done = async {
+    val done = Async.async {
       var i = 0
       while (i < sz) {
-        val reply = await(request(i))
+        val reply = Async.await(request(i))
         i += 1
       }
     }
@@ -49,10 +48,10 @@ class AsyncAwaitBench extends JBench.OfflineReport {
   @benchmark("coroutines.extra.async.delayed-request-reply")
   @curve("async")
   def delayedAsyncAwait(sz: Int) = {
-    val done = async {
+    val done = Async.async {
       var i = 0
       while (i < sz) {
-        val reply = await(delayedRequest(i))
+        val reply = Async.await(delayedRequest(i))
         i += 1
       }
     }
